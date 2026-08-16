@@ -20,20 +20,21 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       inputs: {},
       query,
-      response_mode: 'blocking',
+      response_mode: 'streaming',
       conversation_id: conversationId ?? '',
       user: 'web-user',
     }),
   });
 
-  if (!res.ok) {
+  if (!res.ok || !res.body) {
     return NextResponse.json({ error: 'Failed to fetch response from Dify' }, { status: 500 });
   }
 
-  const data = await res.json();
-
-  return NextResponse.json({
-    answer: data.answer,
-    conversationId: data.conversation_id,
+  return new NextResponse(res.body, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
   });
 }
